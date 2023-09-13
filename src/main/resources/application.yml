@@ -1,0 +1,79 @@
+server:
+  port : 8989
+
+logging:
+  level:
+    root: ERROR
+    org.springframework.cloud: ERROR
+
+spring:
+  cloud:
+    gateway:
+      global-filter:
+        - LoggingGlobalFilter
+      routes:
+        - id: route_1
+          uri: http://localhost:9182/
+          metadata:
+            name: Route 1
+            path:
+            description: For a request path of /srv1/actuator, this sets the path to /actuator before making the downstream request.
+          predicates:
+            - Path=/srv1/**
+          filters:
+            - RewritePath=/srv1(?<segment>/?.*), $\{segment}
+
+        - id: route_2
+          uri: http://localhost:9082/
+          metadata:
+            name: Route 2
+            path:
+            description: For a request path of /srv2/actuator, this sets the path to /actuator before making the downstream request.
+          predicates:
+            - Path=/srv2/**
+          filters:
+            - RewritePath=/srv2(?<segment>/?.*), $\{segment}
+
+        - id: route_3
+          uri: http://localhost:9082/
+          metadata:
+            name: Route 3
+            path:
+            description: For a request path of /demo/actuator, this sets the path to /actuator before making the downstream request.
+          predicates:
+            - Path=/demo/{segment}
+          filters:
+            - SetPath=/{segment}
+
+        - id: route_4
+          uri: http://localhost:9083/example
+          metadata:
+            name: Route 4
+            path:
+            description: For a request path of /example/abc, this sets the path to /abc before making the downstream request.
+          predicates:
+            - Path=/example/{segment}
+          filters:
+            - SetPath=/{segment}
+
+        - id: route_5
+          uri: https://api.nasa.gov
+          metadata:
+            name: Route 5
+            path: Nasa redirect
+            description: This will send a status 302 / 303 / 307 with a Location https://api.nasa.gov header to perform a redirect.
+          predicates:
+            - Path=/nasa/**
+          filters:
+            - RedirectTo=303, https://api.nasa.gov
+
+        - id: route_6
+          uri: https://pokeapi.co/
+          metadata:
+            name: Route 6
+            path:
+            description: This will send a status 302 with a Location https://api.nasa.gov header to perform a redirect.
+          predicates:
+            - Path=/poke/**
+          filters:
+            - RewriteLocationResponseHeader=AS_IN_REQUEST, Location, ,
